@@ -1,7 +1,7 @@
 import sqlite3
 from typing import Callable
 from functools import partial
-from . import core
+from sdf_pipeline import core
 
 
 def invariance(

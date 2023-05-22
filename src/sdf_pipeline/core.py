@@ -2,7 +2,7 @@ import multiprocessing
 import gzip
 import sqlite3
 from typing import Callable, Iterator
-from . import utils
+from sdf_pipeline import utils
 
 
 def _read_molfiles_from_zipped_sdf(sdf_path: str) -> Iterator[str]:
