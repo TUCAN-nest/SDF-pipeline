@@ -2,13 +2,13 @@ import sqlite3
 import argparse
 from typing import Callable
 from functools import partial
-from sdf_pipeline import core
+from sdf_pipeline import core, utils
 from unittest import TestCase
 
 
 def _create_results_table(db: sqlite3.Connection):
     db.execute(
-        "CREATE TABLE IF NOT EXISTS results (test, time, molfile_id UNIQUE, result)"
+        "CREATE TABLE IF NOT EXISTS results (consumer, time, molfile_id UNIQUE, result)"
     )
 
 
@@ -131,7 +131,7 @@ def regression(
 
             log_db.execute(
                 "INSERT INTO results VALUES (?, ?, ?, ?)",
-                (
+                utils.ConsumerResult(
                     "regression",
                     time,
                     molfile_id,
