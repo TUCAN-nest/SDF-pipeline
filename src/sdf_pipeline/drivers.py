@@ -125,6 +125,9 @@ def regression(
                 TestCase().assertEqual(current_result, reference_result)
             except AssertionError as exception:
                 assertion = str(exception)
+                print(
+                    f"{time}: regression test failed for molfile {molfile_id}: {assertion}."
+                )
 
             log_db.execute(
                 "INSERT INTO results VALUES (?, ?, ?, ?)",
