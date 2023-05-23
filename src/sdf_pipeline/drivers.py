@@ -49,7 +49,11 @@ def parse_driver_args() -> argparse.Namespace:
 
 
 def invariance(
-    sdf_path: str, log_path: str, consumer_function: Callable, get_molfile_id: Callable
+    sdf_path: str,
+    log_path: str,
+    consumer_function: Callable,
+    get_molfile_id: Callable,
+    number_of_consumer_processes: int = 8,
 ):
     with sqlite3.connect(log_path) as log_db:
         log_db.execute(
@@ -60,7 +64,7 @@ def invariance(
             sdf_path=sdf_path,
             log_db=log_db,
             consumer_function=partial(consumer_function, get_molfile_id=get_molfile_id),
-            number_of_consumer_processes=8,
+            number_of_consumer_processes=number_of_consumer_processes,
         )
 
         for time, molfile_id, assertion in log_db.execute(
@@ -78,6 +82,7 @@ def regression(
     reference_path: str,
     consumer_function: Callable,
     get_molfile_id: Callable,
+    number_of_consumer_processes: int = 8,
 ):
     with (
         sqlite3.connect(":memory:") as intermediate_log_db,
@@ -95,7 +100,7 @@ def regression(
             sdf_path=sdf_path,
             log_db=intermediate_log_db,
             consumer_function=partial(consumer_function, get_molfile_id=get_molfile_id),
-            number_of_consumer_processes=8,
+            number_of_consumer_processes=number_of_consumer_processes,
         )
 
         intermediate_log_db.execute(
@@ -133,6 +138,7 @@ def regression_reference(
     log_path: str,
     consumer_function: Callable,
     get_molfile_id: Callable,
+    number_of_consumer_processes: int = 8,
 ):
     with sqlite3.connect(log_path) as log_db:
         log_db.execute(
@@ -143,5 +149,5 @@ def regression_reference(
             sdf_path=sdf_path,
             log_db=log_db,
             consumer_function=partial(consumer_function, get_molfile_id=get_molfile_id),
-            number_of_consumer_processes=8,
+            number_of_consumer_processes=number_of_consumer_processes,
         )
