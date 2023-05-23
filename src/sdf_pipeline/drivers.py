@@ -3,13 +3,16 @@ import argparse
 from typing import Callable
 from functools import partial
 from sdf_pipeline import core
+from unittest import TestCase
 
 
 def _create_results_table(db: sqlite3.Connection):
-    db.execute("CREATE TABLE IF NOT EXISTS results (test, time, molfile_id, result)")
+    db.execute(
+        "CREATE TABLE IF NOT EXISTS results (test, time, molfile_id UNIQUE, result)"
+    )
 
 
-def parse_driver_args() -> argparse.Namespace:
+def parse_cli_args() -> argparse.Namespace:
     """
     Parse driver-related arguments from command line.
 
@@ -108,15 +111,18 @@ def regression(
         for molfile_id, reference_result in reference_db.execute(
             "SELECT molfile_id, result FROM results"
         ):
-            # TODO: guard look up in reference db
-            time, current_result = intermediate_log_db.execute(
+            query_result = intermediate_log_db.execute(
                 "SELECT time, result FROM results WHERE molfile_id = ?",
                 (molfile_id,),
-            ).fetchone()[0]
+            ).fetchall()
+            assert query_result, f"Couldn't find molfile ID {molfile_id}."
+            assert len(query_result) == 1, f"Molfile ID {molfile_id} is not unique."
+
+            time, current_result = query_result[0]
 
             assertion = "passed"
             try:
-                assert reference_result == current_result
+                TestCase().assertEqual(current_result, reference_result)
             except AssertionError as exception:
                 assertion = str(exception)
 
