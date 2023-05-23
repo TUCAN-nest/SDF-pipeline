@@ -5,6 +5,10 @@ from functools import partial
 from sdf_pipeline import core
 
 
+def _create_results_table(db: sqlite3.Connection):
+    db.execute("CREATE TABLE IF NOT EXISTS results (test, time, molfile_id, result)")
+
+
 def parse_driver_args() -> argparse.Namespace:
     """
     Parse driver-related arguments from command line.
@@ -56,9 +60,7 @@ def invariance(
     number_of_consumer_processes: int = 8,
 ):
     with sqlite3.connect(log_path) as log_db:
-        log_db.execute(
-            "CREATE TABLE IF NOT EXISTS results (test, time, molfile_id, result)"
-        )
+        _create_results_table(log_db)
 
         core.run(
             sdf_path=sdf_path,
@@ -89,12 +91,8 @@ def regression(
         sqlite3.connect(log_path) as log_db,
         sqlite3.connect(reference_path) as reference_db,
     ):
-        intermediate_log_db.execute(
-            "CREATE TABLE IF NOT EXISTS results (test, time, molfile_id, result)"
-        )
-        log_db.execute(
-            "CREATE TABLE IF NOT EXISTS results (test, time, molfile_id, result)"
-        )
+        _create_results_table(intermediate_log_db)
+        _create_results_table(log_db)
 
         core.run(
             sdf_path=sdf_path,
@@ -141,9 +139,7 @@ def regression_reference(
     number_of_consumer_processes: int = 8,
 ):
     with sqlite3.connect(log_path) as log_db:
-        log_db.execute(
-            "CREATE TABLE IF NOT EXISTS results (test, time, molfile_id, result)"
-        )
+        _create_results_table(log_db)
 
         core.run(
             sdf_path=sdf_path,
