@@ -40,7 +40,7 @@ def parse_cli_args() -> argparse.Namespace:
 
     regression_parser = subparsers.add_parser("regression")
     regression_parser.add_argument("--result-destination", **result_destination_args)
-    group = regression_parser.add_mutually_exclusive_group(required=True)
+    group = regression_parser.add_mutually_exclusive_group()
     group.add_argument(
         "--reference-result",
         metavar="REFERENCE_RESULT",
