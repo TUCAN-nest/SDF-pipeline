@@ -8,7 +8,7 @@ from unittest import TestCase
 
 def _create_results_table(db: sqlite3.Connection):
     db.execute(
-        "CREATE TABLE IF NOT EXISTS results (consumer, time, molfile_id UNIQUE, result)"
+        "CREATE TABLE results (consumer, time, molfile_id UNIQUE, result)"
     )
 
 
