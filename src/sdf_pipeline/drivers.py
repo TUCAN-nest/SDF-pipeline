@@ -1,5 +1,6 @@
 import sqlite3
 import argparse
+import sys
 from typing import Callable
 from functools import partial
 from sdf_pipeline import core, utils
@@ -7,9 +8,7 @@ from unittest import TestCase
 
 
 def _create_results_table(db: sqlite3.Connection):
-    db.execute(
-        "CREATE TABLE results (consumer, time, molfile_id UNIQUE, result)"
-    )
+    db.execute("CREATE TABLE results (consumer, time, molfile_id UNIQUE, result)")
 
 
 def parse_cli_args() -> argparse.Namespace:
@@ -72,13 +71,17 @@ def invariance(
             number_of_consumer_processes=number_of_consumer_processes,
         )
 
+        exit_code = 0
         for time, molfile_id, assertion in log_db.execute(
             "SELECT time, molfile_id, result FROM results"
         ):
             if assertion != "passed":
+                exit_code = 1
                 print(
                     f"{time}: invariance test failed for molfile {molfile_id}: {assertion}."
                 )
+
+        sys.exit(exit_code)
 
 
 def regression(
@@ -108,6 +111,7 @@ def regression(
             "CREATE INDEX IF NOT EXISTS molfile_id_index ON results (molfile_id)"
         )  # crucial, reduces look-up speed by orders of magnitude
 
+        exit_code = 0
         for molfile_id, reference_result in reference_db.execute(
             "SELECT molfile_id, result FROM results"
         ):
@@ -124,6 +128,7 @@ def regression(
             try:
                 TestCase().assertEqual(current_result, reference_result)
             except AssertionError as exception:
+                exit_code = 1
                 assertion = str(exception)
                 print(
                     f"{time}: regression test failed for molfile {molfile_id}: {assertion}."
@@ -138,6 +143,8 @@ def regression(
                     assertion,
                 ),
             )
+
+        sys.exit(exit_code)
 
 
 def regression_reference(
