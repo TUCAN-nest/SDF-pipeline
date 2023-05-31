@@ -5,7 +5,6 @@
 
 ## Consumer API
 Below you find a minimal example of how to write a consumer function.
-The [extended example](example/test.py) shows how to pass a consumer function to the pipeline.
 
 ```Python
 from sdf_pipeline import utils
@@ -38,3 +37,12 @@ def molfile_length_consumer(molfile: str, get_molfile_id: Callable) -> utils.Con
         str(len(molfile)),
     )
 ```
+
+The [extended example](example/test.py) shows how to pass a consumer function to the pipeline.
+Run the example with
+
+```Shell
+python example/test.py regression --compute-reference-result --result-destination ./example/reference.sqlite
+python example/test.py regression --reference-result ./example/reference.sqlite --result-destination ./example/result.sqlite
+```
+
