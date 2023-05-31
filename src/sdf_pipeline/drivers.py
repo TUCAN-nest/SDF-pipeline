@@ -81,7 +81,7 @@ def invariance(
                     f"{time}: invariance test failed for molfile {molfile_id}: {assertion}."
                 )
 
-        sys.exit(exit_code)
+    sys.exit(exit_code)
 
 
 def regression(
@@ -144,7 +144,7 @@ def regression(
                 ),
             )
 
-        sys.exit(exit_code)
+    sys.exit(exit_code)
 
 
 def regression_reference(
