@@ -1,6 +1,5 @@
 import sqlite3
 import argparse
-import sys
 from typing import Callable
 from functools import partial
 from sdf_pipeline import core, utils
@@ -60,7 +59,7 @@ def invariance(
     consumer_function: Callable,
     get_molfile_id: Callable,
     number_of_consumer_processes: int = 8,
-):
+) -> int:
     with sqlite3.connect(log_path) as log_db:
         _create_results_table(log_db)
 
@@ -81,7 +80,7 @@ def invariance(
                     f"{time}: invariance test failed for molfile {molfile_id}: {assertion}."
                 )
 
-    sys.exit(exit_code)
+    return exit_code
 
 
 def regression(
@@ -91,7 +90,7 @@ def regression(
     consumer_function: Callable,
     get_molfile_id: Callable,
     number_of_consumer_processes: int = 8,
-):
+) -> int:
     with (
         sqlite3.connect(":memory:") as intermediate_log_db,
         sqlite3.connect(log_path) as log_db,
@@ -144,7 +143,7 @@ def regression(
                 ),
             )
 
-    sys.exit(exit_code)
+    return exit_code
 
 
 def regression_reference(
@@ -153,7 +152,7 @@ def regression_reference(
     consumer_function: Callable,
     get_molfile_id: Callable,
     number_of_consumer_processes: int = 8,
-):
+) -> int:
     with sqlite3.connect(log_path) as log_db:
         _create_results_table(log_db)
 
@@ -163,3 +162,5 @@ def regression_reference(
             consumer_function=partial(consumer_function, get_molfile_id=get_molfile_id),
             number_of_consumer_processes=number_of_consumer_processes,
         )
+
+    return 0
