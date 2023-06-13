@@ -10,7 +10,7 @@ Below you find a minimal example of how to write a consumer function.
 from sdf_pipeline import utils
 
 molfile = (
-        "\n\n\n  0  0  0     0  0            999 V3000\n"
+        "https://en.wikipedia.org/wiki/This_Is_Water\n\n\n  0  0  0     0  0            999 V3000\n"
         "M  V30 BEGIN CTAB\n"
         "M  V30 COUNTS 3 2 0 0 0\n"
         "M  V30 BEGIN ATOM\n"
