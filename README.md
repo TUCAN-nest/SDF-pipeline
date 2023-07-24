@@ -38,11 +38,11 @@ def molfile_length_consumer(molfile: str, get_molfile_id: Callable) -> utils.Con
     )
 ```
 
-The [extended example](example/test.py) shows how to pass a consumer function to the pipeline.
+The [extended example](example/test_mcule.py) shows how to pass a consumer function to the pipeline.
 Run the example with
 
 ```Shell
-python example/test.py regression --compute-reference-result --result-destination ./example/reference.sqlite
-python example/test.py regression --reference-result ./example/reference.sqlite --result-destination ./example/result.sqlite
+python example/test_mcule.py regression --compute-reference-result --result-destination ./example/data/reference.sqlite
+python example/test_mcule.py regression --reference-result ./example/data/reference.sqlite --result-destination ./example/data/result.sqlite
 ```
 

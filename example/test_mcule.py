@@ -1,17 +1,9 @@
 import re
-from typing import Final, Callable
-from sdf_pipeline import drivers, utils
+from typing import Final
+from sdf_pipeline import drivers
+from consumers import regression_consumer
 
-SDF_PATH: Final = "example/mcule_2000.sdf.gz"
-
-
-def regression_consumer(molfile: str, get_molfile_id: Callable) -> utils.ConsumerResult:
-    return utils.ConsumerResult(
-        "regression",
-        utils.get_current_time(),
-        get_molfile_id(molfile),
-        str(len(molfile)),
-    )
+SDF_PATH: Final = "example/data/mcule_2000.sdf.gz"
 
 
 def get_mcule_id(molfile: str) -> str:
