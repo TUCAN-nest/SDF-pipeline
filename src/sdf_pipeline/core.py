@@ -92,7 +92,7 @@ def run(
         if result == "DONE":
             number_of_finished_consumer_processes += 1
             continue
-        log_db.execute("INSERT INTO results VALUES (?, ?, ?, ?)", result)
+        utils.log_result(log_db, result)
 
     # processes won't join before all queues their interacting with are empty
     producer_process.join()

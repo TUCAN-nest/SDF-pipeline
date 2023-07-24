@@ -133,8 +133,8 @@ def regression(
                     f"{time}: regression test failed for molfile {molfile_id}: {assertion}."
                 )
 
-            log_db.execute(
-                "INSERT INTO results VALUES (?, ?, ?, ?)",
+            utils.log_result(
+                log_db,
                 utils.ConsumerResult(
                     "regression",
                     time,
