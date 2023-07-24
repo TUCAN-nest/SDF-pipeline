@@ -1,27 +1,29 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/python
 {
-	"name": "SDF-pipeline",
-	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/vscode/devcontainers/python:3.11",
-	"customizations": {
-		"vscode": {
-			"settings": {
-				"python.testing.unittestEnabled": false,
-				"python.testing.pytestEnabled": true,
-				"python.formatting.provider": "black",
-				"python.linting.mypyEnabled": true,
-				"editor.formatOnSave": true
-			},
-			"extensions": [
-				"ms-python.python",
-				"ms-python.vscode-pylance",
-				"KevinRose.vsc-python-indent",
-				"streetsidesoftware.code-spell-checker",
-				"bungcip.better-toml",
-				"eamodio.gitlens"
-			]
-		}
-	},
-	"postCreateCommand": "pip install -e .[dev]"
+    "name": "SDF-pipeline",
+    // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+    "image": "mcr.microsoft.com/vscode/devcontainers/python:3.11",
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "python.testing.unittestEnabled": false,
+                "python.testing.pytestEnabled": true,
+                "python.formatting.provider": "black",
+                "python.linting.mypyEnabled": true,
+                "editor.formatOnSave": true,
+                "editor.formatOnSaveMode": "file"
+            },
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "KevinRose.vsc-python-indent",
+                "streetsidesoftware.code-spell-checker",
+                "bungcip.better-toml",
+                "eamodio.gitlens",
+                "GitHub.copilot"
+            ]
+        }
+    },
+    "postCreateCommand": "pip install --upgrade pip && pip install -e .[dev]"
 }
