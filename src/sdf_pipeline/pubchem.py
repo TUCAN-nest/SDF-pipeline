@@ -44,7 +44,7 @@ def _fetch_gzipped_sdf_filenames(ftp_client: FTP) -> list[str]:
 
 
 def _fetch_gzipped_sdf(
-    filename: str, destination_directory: str, ftp_client: FTP
+    filename: str, destination_directory: str, ftp_client: FTP, overwrite_file: bool
 ) -> str:
     """Fetch gzipped SDF from FTP server.
 
@@ -52,13 +52,17 @@ def _fetch_gzipped_sdf(
     Streams data rather than downloading entire SDF file.
     Streaming is important due to large file sizes.
     """
+    filepath = Path(destination_directory).joinpath(filename)
+    if filepath.exists() and not overwrite_file:
+        print(f"{filepath.as_posix()} already exists. Skipping download.")
+        return filepath.as_posix()
+
     md5 = MD5()
 
     def distribute_ftp_callback(block: bytes):
         md5(block)
         gzipped_sdf.write(block)
 
-    filepath = Path(destination_directory).joinpath(filename)
     with filepath.open("wb") as gzipped_sdf:
         try:
             ftp_client.retrbinary(f"RETR {filename}", distribute_ftp_callback)
@@ -88,7 +92,9 @@ def _fetch_gzipped_sdf_hash(filename: str, ftp_client: FTP) -> str:
     return md5[0].split()[0].strip()
 
 
-def download_all_sdf(destination_directory: str) -> Iterator[str]:
+def download_all_sdf(
+    destination_directory: str, overwrite_files: bool = False
+) -> Iterator[str]:
     """Generator yielding file paths of successfully downloaded SDF."""
     with FTP("ftp.ncbi.nlm.nih.gov") as ftp_client:
         ftp_client.login()
@@ -97,7 +103,7 @@ def download_all_sdf(destination_directory: str) -> Iterator[str]:
         # filename = "Compound_033500001_034000000.sdf.gz"  # Compound_033500001_034000000.sdf.gz good for prototyping since it's only 20M large
         for filename in _fetch_gzipped_sdf_filenames(ftp_client):
             if filepath := _fetch_gzipped_sdf(
-                filename, destination_directory, ftp_client
+                filename, destination_directory, ftp_client, overwrite_files
             ):
                 yield filepath
 
