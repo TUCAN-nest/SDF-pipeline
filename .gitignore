@@ -1,4 +1,4 @@
 __pycache__
 *.egg-info
 *.sqlite
-example/data/pubchem/*.sdf.gz
+tests/data/pubchem/*.sdf.gz
