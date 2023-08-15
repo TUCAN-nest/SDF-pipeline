@@ -10,11 +10,28 @@ from ftplib import all_errors as FTPException
 import hashlib
 from pathlib import Path
 from typing import Iterator
+from contextlib import contextmanager
 
 
-class LineData(list):
-    def __call__(self, line: str):
-        super().append(line)
+@contextmanager
+def pubchem_ftp_client():
+    client = FTP("ftp.ncbi.nlm.nih.gov")
+    client.login()
+    client.cwd("pubchem/Compound/CURRENT-Full/SDF/")
+    try:
+        yield client
+    except FTPException as exception:
+        print(exception)
+    finally:
+        client.close()
+
+
+class LineData:
+    def __init__(self):
+        self.content = ""
+
+    def __call__(self, line):
+        self.content += line.split()[0].strip()
 
 
 class MD5:
@@ -31,20 +48,19 @@ class MD5:
         return self.hash_function.hexdigest()
 
 
-def _fetch_gzipped_sdf_filenames(ftp_client: FTP) -> list[str]:
+def _fetch_gzipped_sdf_filenames() -> list[str]:
     """Fetch names of all gzipped SDF files from FTP server."""
-    filenames = LineData()
-    ftp_client.retrlines("LIST", filenames)
 
-    return [
-        filename.split()[-1].strip()
-        for filename in filenames
-        if filename.endswith(".sdf.gz")
-    ]
+    with pubchem_ftp_client() as client:
+        return [
+            file_description[0]
+            for file_description in list(client.mlsd())
+            if file_description[0].endswith(".sdf.gz")
+        ]
 
 
 def _fetch_gzipped_sdf(
-    filename: str, destination_directory: str, ftp_client: FTP, overwrite_file: bool
+    filename: str, destination_directory: str, overwrite_file: bool
 ) -> str:
     """Fetch gzipped SDF from FTP server.
 
@@ -63,14 +79,10 @@ def _fetch_gzipped_sdf(
         md5(block)
         gzipped_sdf.write(block)
 
-    with filepath.open("wb") as gzipped_sdf:
-        try:
-            ftp_client.retrbinary(f"RETR {filename}", distribute_ftp_callback)
-        except FTPException as exception:
-            print(exception)
-            return ""
+    with filepath.open("wb") as gzipped_sdf, pubchem_ftp_client() as client:
+        client.retrbinary(f"RETR {filename}", distribute_ftp_callback)
 
-    if md5.hash != _fetch_gzipped_sdf_hash(filename, ftp_client):
+    if md5.hash != _fetch_gzipped_sdf_hash(filename):
         print(
             f"The hash of {filepath.as_posix()} doesn't match it's hash on the FTP server. Removing the file locally."
         )
@@ -80,30 +92,24 @@ def _fetch_gzipped_sdf(
     return filepath.as_posix()
 
 
-def _fetch_gzipped_sdf_hash(filename: str, ftp_client: FTP) -> str:
+def _fetch_gzipped_sdf_hash(filename: str) -> str:
     """Fetch MD5 hash from FTP server."""
     md5 = LineData()
-    try:
-        ftp_client.retrlines(f"RETR {filename}.md5", md5)
-    except FTPException as exception:
-        print(exception)
-        return ""
 
-    return md5[0].split()[0].strip()
+    with pubchem_ftp_client() as client:
+        client.retrlines(f"RETR {filename}.md5", md5)
+
+    return md5.content
 
 
 def download_all_sdf(
     destination_directory: str, overwrite_files: bool = False
 ) -> Iterator[str]:
     """Generator yielding file paths of successfully downloaded SDF."""
-    with FTP("ftp.ncbi.nlm.nih.gov") as ftp_client:
-        ftp_client.login()
-        ftp_client.cwd("pubchem/Compound/CURRENT-Full/SDF/")
-
-        # filename = "Compound_033500001_034000000.sdf.gz"  # Compound_033500001_034000000.sdf.gz good for prototyping since it's only 20M large
-        for filename in _fetch_gzipped_sdf_filenames(ftp_client):
+    with pubchem_ftp_client():
+        for filename in _fetch_gzipped_sdf_filenames():
             if filepath := _fetch_gzipped_sdf(
-                filename, destination_directory, ftp_client, overwrite_files
+                filename, destination_directory, overwrite_files
             ):
                 yield filepath
 
