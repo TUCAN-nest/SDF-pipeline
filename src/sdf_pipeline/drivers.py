@@ -1,5 +1,4 @@
 import sqlite3
-import argparse
 from typing import Callable
 from functools import partial
 from sdf_pipeline import core, utils
@@ -8,49 +7,6 @@ from unittest import TestCase
 
 def _create_results_table(db: sqlite3.Connection):
     db.execute("CREATE TABLE results (consumer, time, molfile_id UNIQUE, result)")
-
-
-def parse_cli_args() -> argparse.Namespace:
-    """
-    Parse driver-related arguments from command line.
-
-    Examples:
-    python -m <package.module> --help
-    python -m <package.module> regression --help
-    python -m <package.module> invariance --help
-    python -m <package.module> invariance --result-destination where/to/save/results.sqlite
-    python -m <package.module> regression --compute-reference-result --result-destination where/to/save/reference-results.sqlite
-    python -m <package.module> regression --reference-result path/to/reference.sqlite --result-destination where/to/save/results.sqlite
-    """
-    parser = argparse.ArgumentParser(description="Run tests against SDF.")
-    subparsers = parser.add_subparsers(
-        required=True, dest="test_type", title="test-type"
-    )
-
-    result_destination_args = {
-        "default": ":memory:",
-        "metavar": "RESULT_DESTINATION",
-        "help": "Save results to this path. If not specified, results will be held in-memory for the duration of the current run.",
-    }
-
-    invariance_parser = subparsers.add_parser("invariance")
-    invariance_parser.add_argument("--result-destination", **result_destination_args)
-
-    regression_parser = subparsers.add_parser("regression")
-    regression_parser.add_argument("--result-destination", **result_destination_args)
-    group = regression_parser.add_mutually_exclusive_group()
-    group.add_argument(
-        "--reference-result",
-        metavar="REFERENCE_RESULT",
-        help="Path to reference results. The current run will be compared against those results.",
-    )
-    group.add_argument(  # boolean flag, defaults to False
-        "--compute-reference-result",
-        action="store_true",
-        help="Compute reference results against which subsequent runs can be compared.",
-    )
-
-    return parser.parse_args()
 
 
 def invariance(
