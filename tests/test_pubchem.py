@@ -1,36 +1,15 @@
-from pathlib import Path
-from sdf_pipeline import drivers
 from sdf_pipeline import pubchem
-from .consumers import regression_consumer
 
 
-if __name__ == "__main__":
-    exit_code = 0
+def test_download_all_sdf(tmp_path):
+    sdf_path_generator = pubchem.download_all_sdf(destination_directory=str(tmp_path))
+    sdf_paths = {next(sdf_path_generator) for _ in range(2)}
 
-    for sdf_path in (
-        Path(__file__)
-        .parent.absolute()
-        .joinpath("data/pubchem")
-        .glob("Compound_*_*.sdf.gz")
-    ):
-        exit_code = max(
-            exit_code,
-            drivers.regression_reference(
-                sdf_path=sdf_path,
-                log_path=f"{sdf_path}_regression_reference.sqlite",
-                consumer_function=regression_consumer,
-                get_molfile_id=pubchem.get_id,
-            ),
-        )
-        exit_code = max(
-            exit_code,
-            drivers.regression(
-                sdf_path=sdf_path,
-                log_path=f"{sdf_path}_regression.sqlite",
-                reference_path=f"{sdf_path}_regression_reference.sqlite",
-                consumer_function=regression_consumer,
-                get_molfile_id=pubchem.get_id,
-            ),
-        )
-
-    raise SystemExit(exit_code)
+    assert sdf_paths == {
+        str(tmp_path / sdf_path)
+        for sdf_path in [
+            "Compound_000000001_000500000.sdf.gz",
+            "Compound_001000001_001500000.sdf.gz",
+        ]
+    }
+    assert all((tmp_path / sdf_path).exists() for sdf_path in sdf_paths)

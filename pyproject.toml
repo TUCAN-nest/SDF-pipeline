@@ -5,8 +5,15 @@ version = "0.1.0"
 [project.optional-dependencies]
 dev = [
     "black",
-    "mypy"
+    "mypy",
+    "pytest",
 ]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests",
+]
+addopts = "-v"
