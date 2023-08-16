@@ -34,8 +34,6 @@ def _produce_molfiles(
     for _ in range(n_poison_pills):
         molfile_queue.put("DONE")  # poison pill: tell consumer processes we're done
 
-    print(f"{utils.get_current_time()}: Done producing molfiles.")
-
 
 def _consume_molfiles(
     molfile_queue: multiprocessing.Queue,
@@ -48,8 +46,6 @@ def _consume_molfiles(
 
     result_queue.put(f"DONE")
 
-    print(f"{utils.get_current_time()}: Process {process_id} done consuming molfiles.")
-
 
 def run(
     sdf_path: str,
@@ -60,16 +56,12 @@ def run(
     molfile_queue: multiprocessing.Queue = multiprocessing.Queue()  # TODO: limit size?
     result_queue: multiprocessing.Queue = multiprocessing.Queue()
 
-    print(f"{utils.get_current_time()}: Starting producer process.")
     producer_process = multiprocessing.Process(
         target=_produce_molfiles,
         args=(molfile_queue, sdf_path, number_of_consumer_processes),
     )
     producer_process.start()
 
-    print(
-        f"{utils.get_current_time()}: Distributing consumer function over {number_of_consumer_processes} processes."
-    )
     consumer_processes = [
         multiprocessing.Process(
             target=_consume_molfiles,
@@ -86,7 +78,6 @@ def run(
         consumer_process.start()
 
     number_of_finished_consumer_processes = 0
-    print(f"{utils.get_current_time()}: Starting logging results.")
     while number_of_finished_consumer_processes < number_of_consumer_processes:
         result = result_queue.get()  # blocks until result is available
         if result == "DONE":
