@@ -27,7 +27,7 @@ def _read_molfiles_from_zipped_sdf(sdf_path: str) -> Iterator[str]:
 
 def _produce_molfiles(
     molfile_queue: multiprocessing.Queue, sdf_path: str, n_poison_pills: int
-):
+) -> None:
     for molfile in _read_molfiles_from_zipped_sdf(sdf_path):
         molfile_queue.put(molfile)
 
@@ -39,8 +39,7 @@ def _consume_molfiles(
     molfile_queue: multiprocessing.Queue,
     result_queue: multiprocessing.Queue,
     consumer_function: Callable,
-    process_id: int,
-):
+) -> None:
     for molfile in iter(molfile_queue.get, "DONE"):
         result_queue.put(consumer_function(molfile))
 
@@ -52,7 +51,7 @@ def run(
     log_db: sqlite3.Connection,
     consumer_function: Callable,
     number_of_consumer_processes: int,
-):
+) -> None:
     molfile_queue: multiprocessing.Queue = multiprocessing.Queue()  # TODO: limit size?
     result_queue: multiprocessing.Queue = multiprocessing.Queue()
 
@@ -69,7 +68,6 @@ def run(
                 molfile_queue,
                 result_queue,
                 consumer_function,
-                process_id,
             ),
         )
         for process_id in range(number_of_consumer_processes)

@@ -5,7 +5,7 @@ from sdf_pipeline import core, utils
 from unittest import TestCase
 
 
-def _create_results_table(db: sqlite3.Connection):
+def _create_results_table(db: sqlite3.Connection) -> None:
     db.execute("CREATE TABLE results (consumer, time, molfile_id UNIQUE, result)")
 
 
