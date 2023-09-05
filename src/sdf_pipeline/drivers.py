@@ -5,10 +5,6 @@ from sdf_pipeline import core, utils
 from unittest import TestCase
 
 
-def _create_results_table(db: sqlite3.Connection) -> None:
-    db.execute("CREATE TABLE results (molfile_id UNIQUE, time, info, result)")
-
-
 def invariance(
     sdf_path: str,
     log_path: str,
@@ -17,7 +13,7 @@ def invariance(
     number_of_consumer_processes: int = 8,
 ) -> int:
     with sqlite3.connect(log_path) as log_db:
-        _create_results_table(log_db)
+        utils.create_results_table(log_db)
 
         core.run(
             sdf_path=sdf_path,
@@ -52,8 +48,8 @@ def regression(
         sqlite3.connect(log_path) as log_db,
         sqlite3.connect(reference_path) as reference_db,
     ):
-        _create_results_table(intermediate_log_db)
-        _create_results_table(log_db)
+        utils.create_results_table(intermediate_log_db)
+        utils.create_results_table(log_db)
 
         core.run(
             sdf_path=sdf_path,
@@ -110,7 +106,7 @@ def regression_reference(
     number_of_consumer_processes: int = 8,
 ) -> int:
     with sqlite3.connect(log_path) as log_db:
-        _create_results_table(log_db)
+        utils.create_results_table(log_db)
 
         core.run(
             sdf_path=sdf_path,
