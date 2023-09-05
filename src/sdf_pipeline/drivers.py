@@ -44,21 +44,19 @@ def regression(
     number_of_consumer_processes: int = 8,
 ) -> int:
     with (
-        sqlite3.connect(":memory:") as intermediate_log_db,
         sqlite3.connect(log_path) as log_db,
         sqlite3.connect(reference_path) as reference_db,
     ):
-        utils.create_results_table(intermediate_log_db)
         utils.create_results_table(log_db)
 
         core.run(
             sdf_path=sdf_path,
-            log_db=intermediate_log_db,
+            log_db=log_db,
             consumer_function=partial(consumer_function, get_molfile_id=get_molfile_id),
             number_of_consumer_processes=number_of_consumer_processes,
         )
 
-        intermediate_log_db.execute(
+        log_db.execute(
             "CREATE INDEX IF NOT EXISTS molfile_id_index ON results (molfile_id)"
         )  # crucial, reduces look-up speed by orders of magnitude
 
@@ -66,14 +64,14 @@ def regression(
         for molfile_id, reference_result in reference_db.execute(
             "SELECT molfile_id, result FROM results"
         ):
-            query_result = intermediate_log_db.execute(
-                "SELECT time, result FROM results WHERE molfile_id = ?",
+            query_result = log_db.execute(
+                "SELECT time, info, result FROM results WHERE molfile_id = ?",
                 (molfile_id,),
             ).fetchall()
             assert query_result, f"Couldn't find molfile ID {molfile_id}."
             assert len(query_result) == 1, f"Molfile ID {molfile_id} is not unique."
 
-            time, current_result = query_result[0]
+            time, info, current_result = query_result[0]
 
             assertion = "passed"
             try:
@@ -82,18 +80,17 @@ def regression(
                 exit_code = 1
                 assertion = str(exception)
                 print(
-                    f"{time}: regression test failed for molfile {molfile_id}: {assertion}."
+                    f"{time}: regression test failed for molfile {molfile_id} (computed with {info}): {assertion}."
                 )
 
-            utils.log_result(
-                log_db,
-                utils.ConsumerResult(
-                    molfile_id,
-                    time,
-                    "regression test",
-                    assertion,
-                ),
+            log_db.execute(
+                "UPDATE results SET result = ? WHERE molfile_id = ?",
+                (assertion, molfile_id),
             )
+
+        log_db.execute(
+            "DROP INDEX molfile_id_index"
+        )  # drop index to decrease file size
 
     return exit_code
 
