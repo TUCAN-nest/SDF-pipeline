@@ -5,9 +5,9 @@ from dataclasses import dataclass, astuple
 
 @dataclass
 class ConsumerResult:
-    consumer: str = ""
-    time: str = ""
     molfile_id: str = ""
+    time: str = ""
+    info: str = ""
     result: str = ""
 
 

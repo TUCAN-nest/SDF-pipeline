@@ -31,9 +31,9 @@ def get_molfile_id(molfile: str) -> str:
 
 def molfile_length_consumer(molfile: str, get_molfile_id: Callable) -> utils.ConsumerResult:
     return utils.ConsumerResult(
-        "molfile length",
-        utils.get_current_time(),
         get_molfile_id(molfile),
+        utils.get_current_time(),
+        "molfile length",
         str(len(molfile)),
     )
 ```

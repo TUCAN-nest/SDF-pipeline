@@ -6,7 +6,7 @@ from unittest import TestCase
 
 
 def _create_results_table(db: sqlite3.Connection) -> None:
-    db.execute("CREATE TABLE results (consumer, time, molfile_id UNIQUE, result)")
+    db.execute("CREATE TABLE results (molfile_id UNIQUE, time, info, result)")
 
 
 def invariance(
@@ -92,9 +92,9 @@ def regression(
             utils.log_result(
                 log_db,
                 utils.ConsumerResult(
-                    "regression",
-                    time,
                     molfile_id,
+                    time,
+                    "regression test",
                     assertion,
                 ),
             )
