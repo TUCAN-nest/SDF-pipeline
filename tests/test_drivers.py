@@ -67,4 +67,4 @@ def test_regression_driver(sdf_path, reference_path, tmp_path):
         assert len(passed_results) == 19999
         assert set(passed_results) == {("passed",)}
         assert failed_id == "9261759198"
-        assert failed_result == "'920' != '42'\n- 920\n+ 42\n"
+        assert failed_result == "current: '920' != reference: '42'"

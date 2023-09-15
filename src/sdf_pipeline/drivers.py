@@ -2,7 +2,7 @@ import sqlite3
 from typing import Callable
 from functools import partial
 from sdf_pipeline import core, utils
-from unittest import TestCase
+from pathlib import Path
 
 
 def invariance(
@@ -74,13 +74,13 @@ def regression(
             time, info, current_result = query_result[0]
 
             assertion = "passed"
-            try:
-                TestCase().assertEqual(current_result, reference_result)
-            except AssertionError as exception:
+            if current_result != reference_result:
                 exit_code = 1
-                assertion = str(exception)
+                assertion = (
+                    f"current: '{current_result}' != reference: '{reference_result}'"
+                )
                 print(
-                    f"{time}: regression test failed for molfile {molfile_id} (computed with {info}): {assertion}."
+                    f"{time}: regression test failed for molfile {molfile_id} from {Path(sdf_path).name} (computed with {info}): {assertion}."
                 )
 
             log_db.execute(
