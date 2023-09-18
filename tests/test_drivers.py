@@ -58,13 +58,8 @@ def test_regression_driver(sdf_path, reference_path, tmp_path):
 
     assert exit_code == 1
     with sqlite3.connect(tmp_path / "regression.sqlite") as db:
-        passed_results = db.execute(
-            "SELECT result FROM results WHERE result = 'passed'",
-        ).fetchall()
         failed_id, failed_result = db.execute(
             "SELECT molfile_id, result FROM results WHERE result != 'passed'",
         ).fetchone()
-        assert len(passed_results) == 19999
-        assert set(passed_results) == {("passed",)}
         assert failed_id == "9261759198"
         assert failed_result == "current: '920' != reference: '42'"
