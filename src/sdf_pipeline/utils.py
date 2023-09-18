@@ -12,7 +12,7 @@ class ConsumerResult:
 
 
 def get_current_time() -> str:
-    return datetime.now().isoformat(timespec="seconds")
+    return datetime.now().strftime("%Y%m%dT%H%M%S")
 
 
 def log_result(log_db: sqlite3.Connection, result: ConsumerResult) -> None:
