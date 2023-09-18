@@ -1,11 +1,11 @@
 import multiprocessing
 import gzip
-import sqlite3
-from typing import Callable, Iterator
-from sdf_pipeline import utils
+from typing import Callable
+from collections.abc import Generator
+from sdf_pipeline.utils import ConsumerResult
 
 
-def _read_molfiles_from_zipped_sdf(sdf_path: str) -> Iterator[str]:
+def _read_molfiles_from_zipped_sdf(sdf_path: str) -> Generator[str, None, None]:
     """Generator yielding molfiles from gzipped SDF file.
     (G)unzips the SDF on a line-by-line basis to avoid loading entire SDF into memory.
 
@@ -48,10 +48,9 @@ def _consume_molfiles(
 
 def run(
     sdf_path: str,
-    log_db: sqlite3.Connection,
     consumer_function: Callable,
     number_of_consumer_processes: int,
-) -> None:
+) -> Generator[ConsumerResult, None, None]:
     molfile_queue: multiprocessing.Queue = multiprocessing.Queue()  # TODO: limit size?
     result_queue: multiprocessing.Queue = multiprocessing.Queue()
 
@@ -81,7 +80,7 @@ def run(
         if result == "DONE":
             number_of_finished_consumer_processes += 1
             continue
-        utils.log_result(log_db, result)
+        yield result
 
     # processes won't join before all queues their interacting with are empty
     producer_process.join()
