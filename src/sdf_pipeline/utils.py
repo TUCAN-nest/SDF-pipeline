@@ -23,4 +23,6 @@ def log_result(log_db: sqlite3.Connection, result: ConsumerResult) -> None:
 
 
 def create_results_table(db: sqlite3.Connection) -> None:
-    db.execute("CREATE TABLE results (molfile_id UNIQUE, time, info, result)")
+    db.execute(
+        "CREATE TABLE IF NOT EXISTS results (molfile_id UNIQUE, time, info, result)"
+    )
