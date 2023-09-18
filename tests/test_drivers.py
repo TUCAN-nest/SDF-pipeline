@@ -4,8 +4,17 @@ import pytest
 from operator import add
 from functools import reduce
 from pathlib import Path
-from sdf_pipeline import drivers
-from consumers import regression_consumer
+from sdf_pipeline import drivers, utils
+from typing import Callable
+
+
+def regression_consumer(molfile: str, get_molfile_id: Callable) -> utils.ConsumerResult:
+    return utils.ConsumerResult(
+        get_molfile_id(molfile),
+        utils.get_current_time(),
+        "regression",
+        str(len(molfile)),
+    )
 
 
 @pytest.fixture
