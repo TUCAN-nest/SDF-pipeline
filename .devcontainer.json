@@ -1,28 +1,30 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the
-// README at: https://github.com/devcontainers/templates/tree/main/src/python
+// https://containers.dev/implementors/json_reference/
+// https://hub.docker.com/_/microsoft-vscode-devcontainers
 {
     "name": "SDF-pipeline",
-    // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
     "image": "mcr.microsoft.com/vscode/devcontainers/python:3.11",
     "customizations": {
         "vscode": {
-            "settings": {
-                "python.testing.unittestEnabled": false,
-                "python.testing.pytestEnabled": true,
-                "python.formatting.provider": "black",
-                "python.linting.mypyEnabled": true,
-                "editor.formatOnSave": true,
-                "editor.formatOnSaveMode": "file"
-            },
             "extensions": [
                 "ms-python.python",
                 "ms-python.vscode-pylance",
+                "ms-python.black-formatter",
+                "ms-python.mypy-type-checker",
+                "ms-python.flake8",
                 "KevinRose.vsc-python-indent",
                 "streetsidesoftware.code-spell-checker",
-                "bungcip.better-toml",
+                "tamasfe.even-better-toml",
                 "eamodio.gitlens",
                 "GitHub.copilot"
-            ]
+            ],
+            "settings": {
+                "editor.formatOnSave": true,
+                "python": {
+                    "editor.defaultFormatter": "ms-python.black-formatter",
+                    "testing.unittestEnabled": false,
+                    "testing.pytestEnabled": true
+                }
+            }
         }
     },
     "postCreateCommand": "pip install --upgrade pip && pip install -e .[dev]"

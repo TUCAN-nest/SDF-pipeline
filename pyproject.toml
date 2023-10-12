@@ -3,17 +3,11 @@ name = "sdf_pipeline"
 version = "0.1.0"
 
 [project.optional-dependencies]
-dev = [
-    "black",
-    "mypy",
-    "pytest",
-]
+dev = ["pytest"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.pytest.ini_options]
-testpaths = [
-    "tests",
-]
+testpaths = ["tests"]
 addopts = "-v"
