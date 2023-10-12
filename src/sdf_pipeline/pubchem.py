@@ -72,7 +72,7 @@ def _fetch_gzipped_sdf(
     filepath = Path(destination_directory).joinpath(filename)
     if filepath.exists() and not overwrite_file:
         print(f"{filepath.as_posix()} already exists. Skipping download.")
-        return filepath.as_posix()
+        return ""
 
     md5 = MD5()
 
@@ -90,7 +90,7 @@ def _fetch_gzipped_sdf(
         # Some PubChem datasets (e.g., Compound 3D) don't have MD5 hashes.
         if md5.hash != _fetch_gzipped_sdf_hash(filename, dataset_directory):
             print(
-                f"The hash of {filepath.as_posix()} doesn't match it's hash on the FTP server. Removing the file locally."
+                f"The hash of {filepath.as_posix()} doesn't match it's corresponding hash on the FTP server. Removing the file locally."
             )
             filepath.unlink()
             return ""
