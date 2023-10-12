@@ -1,8 +1,8 @@
-"""Download gzipped SDF files from ftp.ncbi.nlm.nih.gov/pubchem/Compound/CURRENT-Full/SDF/.
+"""Download gzipped SDF files from ftp.ncbi.nlm.nih.gov/pubchem/.
 
 https://openbook.rheinwerk-verlag.de/python/34_003.html
 https://docs.python.org/3/library/ftplib.html
-https://pubchem.ncbi.nlm.nih.gov/docs/rdf-ftp
+https://pubchem.ncbi.nlm.nih.gov/docs/downloads#section=From-the-PubChem-FTP-Site
 """
 
 from ftplib import FTP
@@ -14,10 +14,10 @@ from contextlib import contextmanager
 
 
 @contextmanager
-def pubchem_ftp_client():
+def pubchem_ftp_client(dataset_directory: str):
     client = FTP("ftp.ncbi.nlm.nih.gov")
     client.login()
-    client.cwd("pubchem/Compound/CURRENT-Full/SDF/")
+    client.cwd(dataset_directory)
     try:
         yield client
     except FTPException as exception:
@@ -48,10 +48,10 @@ class MD5:
         return self.hash_function.hexdigest()
 
 
-def _fetch_gzipped_sdf_filenames() -> list[str]:
-    """Fetch names of all gzipped SDF files from FTP server."""
+def _fetch_gzipped_sdf_filenames(dataset_directory: str) -> list[str]:
+    """Fetch names of all gzipped SDF from FTP server."""
 
-    with pubchem_ftp_client() as client:
+    with pubchem_ftp_client(dataset_directory) as client:
         return [
             file_description[0]
             for file_description in list(client.mlsd())
@@ -60,13 +60,14 @@ def _fetch_gzipped_sdf_filenames() -> list[str]:
 
 
 def _fetch_gzipped_sdf(
-    filename: str, destination_directory: str, overwrite_file: bool
+    filename: str,
+    destination_directory: str,
+    dataset_directory: str,
+    overwrite_file: bool,
 ) -> str:
     """Fetch gzipped SDF from FTP server.
 
     Validates the gzipped SDF and writes it to the file system.
-    Streams data rather than downloading entire SDF file.
-    Streaming is important due to large file sizes.
     """
     filepath = Path(destination_directory).joinpath(filename)
     if filepath.exists() and not overwrite_file:
@@ -79,39 +80,45 @@ def _fetch_gzipped_sdf(
         md5(block)
         gzipped_sdf.write(block)
 
-    with filepath.open("wb") as gzipped_sdf, pubchem_ftp_client() as client:
+    with filepath.open("wb") as gzipped_sdf, pubchem_ftp_client(
+        dataset_directory
+    ) as client:
         client.retrbinary(f"RETR {filename}", distribute_ftp_callback)
 
-    if md5.hash != _fetch_gzipped_sdf_hash(filename):
-        print(
-            f"The hash of {filepath.as_posix()} doesn't match it's hash on the FTP server. Removing the file locally."
-        )
-        filepath.unlink()
-        return ""
+    md5_hash_from_ftp_server = _fetch_gzipped_sdf_hash(filename, dataset_directory)
+    if md5_hash_from_ftp_server:
+        # Some PubChem datasets (e.g., Compound 3D) don't have MD5 hashes.
+        if md5.hash != _fetch_gzipped_sdf_hash(filename, dataset_directory):
+            print(
+                f"The hash of {filepath.as_posix()} doesn't match it's hash on the FTP server. Removing the file locally."
+            )
+            filepath.unlink()
+            return ""
 
     return filepath.as_posix()
 
 
-def _fetch_gzipped_sdf_hash(filename: str) -> str:
+def _fetch_gzipped_sdf_hash(filename: str, dataset_directory: str) -> str:
     """Fetch MD5 hash from FTP server."""
     md5 = LineData()
 
-    with pubchem_ftp_client() as client:
+    with pubchem_ftp_client(dataset_directory) as client:
         client.retrlines(f"RETR {filename}.md5", md5)
 
     return md5.content
 
 
 def download_all_sdf(
-    destination_directory: str, overwrite_files: bool = False
+    destination_directory: str,
+    dataset_directory: str = "pubchem/Compound/CURRENT-Full/SDF/",
+    overwrite_files: bool = False,
 ) -> Iterator[str]:
-    """Generator yielding file paths of successfully downloaded SDF."""
-    with pubchem_ftp_client():
-        for filename in _fetch_gzipped_sdf_filenames():
-            if filepath := _fetch_gzipped_sdf(
-                filename, destination_directory, overwrite_files
-            ):
-                yield filepath
+    """Generator yielding file paths of successfully downloaded gzipped SDF."""
+    for filename in _fetch_gzipped_sdf_filenames(dataset_directory):
+        if filepath := _fetch_gzipped_sdf(
+            filename, destination_directory, dataset_directory, overwrite_files
+        ):
+            yield filepath
 
 
 def get_id(molfile: str) -> str:
