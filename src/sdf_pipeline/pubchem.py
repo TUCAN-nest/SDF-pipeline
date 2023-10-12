@@ -74,10 +74,10 @@ def _fetch_gzipped_sdf(
         print(f"{filepath.as_posix()} already exists. Skipping download.")
         return ""
 
-    md5 = MD5()
+    md5_local = MD5()
 
     def distribute_ftp_callback(block: bytes):
-        md5(block)
+        md5_local(block)
         gzipped_sdf.write(block)
 
     with filepath.open("wb") as gzipped_sdf, pubchem_ftp_client(
@@ -85,10 +85,10 @@ def _fetch_gzipped_sdf(
     ) as client:
         client.retrbinary(f"RETR {filename}", distribute_ftp_callback)
 
-    md5_hash_from_ftp_server = _fetch_gzipped_sdf_hash(filename, dataset_directory)
-    if md5_hash_from_ftp_server:
+    md5_server = _fetch_gzipped_sdf_hash(filename, dataset_directory)
+    if md5_server:
         # Some PubChem datasets (e.g., Compound 3D) don't have MD5 hashes.
-        if md5.hash != _fetch_gzipped_sdf_hash(filename, dataset_directory):
+        if md5_local.hash != md5_server:
             print(
                 f"The hash of {filepath.as_posix()} doesn't match it's corresponding hash on the FTP server. Removing the file locally."
             )
