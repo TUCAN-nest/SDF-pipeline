@@ -114,10 +114,16 @@ def _fetch_gzipped_sdf_hash(filename: str, dataset_directory: str) -> str:
 
 def download_all_sdf(
     destination_directory: str,
-    dataset_directory: str = "pubchem/Compound/CURRENT-Full/SDF/",
+    dataset_directory: str,
     overwrite_files: bool = False,
 ) -> Iterator[str]:
-    """Generator yielding file paths of successfully downloaded gzipped SDF."""
+    """Generator yielding file paths of successfully downloaded gzipped SDF.
+
+    `dataset_directory` can be one of
+    `pubchem/Compound/CURRENT-Full/SDF/`,
+    `pubchem/Substance/CURRENT-Full/SDF/`, or
+    `pubchem/Compound_3D/01_conf_per_cmpd/SDF`.
+    """
     for filename in _fetch_gzipped_sdf_filenames(dataset_directory):
         if filepath := _fetch_gzipped_sdf(
             filename, destination_directory, dataset_directory, overwrite_files
