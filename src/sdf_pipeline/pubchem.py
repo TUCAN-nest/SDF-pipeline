@@ -103,7 +103,11 @@ def _fetch_gzipped_sdf_hash(filename: str, dataset_directory: str) -> str:
     md5 = LineData()
 
     with pubchem_ftp_client(dataset_directory) as client:
-        client.retrlines(f"RETR {filename}.md5", md5)
+        try:
+            client.retrlines(f"RETR {filename}.md5", md5)
+        except FTPException:
+            # Some PubChem datasets (e.g., Compound 3D) don't have MD5 hashes.
+            pass
 
     return md5.content
 
