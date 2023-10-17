@@ -1,52 +1,42 @@
 import sqlite3
 from typing import Callable
 from functools import partial
-from sdf_pipeline import core, utils
+from sdf_pipeline import core, utils, logger
 from pathlib import Path
 from dataclasses import astuple
 
 
 def invariance(
     sdf_path: str,
-    log_path: str,
     consumer_function: Callable,
     get_molfile_id: Callable,
     number_of_consumer_processes: int = 8,
 ) -> int:
-    with sqlite3.connect(log_path) as log_db:
-        utils.create_results_table(log_db)
+    exit_code = 0
 
-        exit_code = 0
-
-        for consumer_result in core.run(
-            sdf_path=sdf_path,
-            consumer_function=partial(consumer_function, get_molfile_id=get_molfile_id),
-            number_of_consumer_processes=number_of_consumer_processes,
-        ):
-            molfile_id, time, info, assertion = astuple(consumer_result)
-            if assertion != "passed":
-                exit_code = 1
-                print(
-                    f"{time}: invariance test failed for molfile {molfile_id} from {Path(sdf_path).name} (computed with {info}): {assertion}."
-                )
-                utils.log_result(log_db, consumer_result)
+    for consumer_result in core.run(
+        sdf_path=sdf_path,
+        consumer_function=partial(consumer_function, get_molfile_id=get_molfile_id),
+        number_of_consumer_processes=number_of_consumer_processes,
+    ):
+        molfile_id, time, info, assertion = astuple(consumer_result)
+        if assertion != "passed":
+            exit_code = 1
+            logger.info(
+                f"{time}: invariance test failed for molfile {molfile_id} from {Path(sdf_path).name} (computed with {info}): {assertion}."
+            )
 
     return exit_code
 
 
 def regression(
     sdf_path: str,
-    log_path: str,
     reference_path: str,
     consumer_function: Callable,
     get_molfile_id: Callable,
     number_of_consumer_processes: int = 8,
 ) -> int:
-    with (
-        sqlite3.connect(log_path) as log_db,
-        sqlite3.connect(reference_path) as reference_db,
-    ):
-        utils.create_results_table(log_db)
+    with sqlite3.connect(reference_path) as reference_db:
         exit_code = 0
         processed_molfile_ids = set()
 
@@ -76,17 +66,8 @@ def regression(
                 assertion = (
                     f"current: '{current_result}' != reference: '{reference_result}'"
                 )
-                print(
-                    f"{time}: regression test failed for molfile {molfile_id} from {Path(sdf_path).name} (computed with {info}): {assertion}."
-                )
-                utils.log_result(
-                    log_db,
-                    utils.ConsumerResult(
-                        molfile_id=molfile_id,
-                        time=time,
-                        info=info,
-                        result=assertion,
-                    ),
+                logger.info(
+                    f"regression test failed:\n<time>: {time}\n<molfile_id>: {molfile_id}>\n<sdf>: {Path(sdf_path).name}\n<info>: {info}\n<assertion>: {assertion}"
                 )
 
         unprocessed_molfile_ids = (
@@ -108,22 +89,22 @@ def regression(
 
 def regression_reference(
     sdf_path: str,
-    log_path: str,
+    reference_path: str,
     consumer_function: Callable,
     get_molfile_id: Callable,
     number_of_consumer_processes: int = 8,
 ) -> int:
-    with sqlite3.connect(log_path) as log_db:
-        utils.create_results_table(log_db)
+    with sqlite3.connect(reference_path) as reference_db:
+        utils.create_results_table(reference_db)
 
         for consumer_result in core.run(
             sdf_path=sdf_path,
             consumer_function=partial(consumer_function, get_molfile_id=get_molfile_id),
             number_of_consumer_processes=number_of_consumer_processes,
         ):
-            utils.log_result(log_db, consumer_result)
+            utils.log_result(reference_db, consumer_result)
 
-        log_db.execute(
+        reference_db.execute(
             "CREATE INDEX IF NOT EXISTS molfile_id_index ON results (molfile_id)"
         )  # crucial, reduces look-up speed by orders of magnitude
 

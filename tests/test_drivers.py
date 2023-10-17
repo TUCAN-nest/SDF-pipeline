@@ -6,6 +6,7 @@ from functools import reduce
 from pathlib import Path
 from sdf_pipeline import drivers, utils
 from typing import Callable
+import logging
 
 
 def regression_consumer(molfile: str, get_molfile_id: Callable) -> utils.ConsumerResult:
@@ -41,7 +42,7 @@ def _get_mcule_id(molfile: str) -> str:
 def test_regression_reference_driver(sdf_path, tmp_path):
     exit_code = drivers.regression_reference(
         sdf_path=sdf_path,
-        log_path=tmp_path / "regression_reference.sqlite",
+        reference_path=tmp_path / "regression_reference.sqlite",
         consumer_function=regression_consumer,
         get_molfile_id=_get_mcule_id,
         number_of_consumer_processes=2,
@@ -55,20 +56,20 @@ def test_regression_reference_driver(sdf_path, tmp_path):
         assert reduce(add, [int(result[0]) for result in results]) == 30943876
 
 
-def test_regression_driver(sdf_path, reference_path, tmp_path):
+def test_regression_driver(sdf_path, reference_path, caplog):
+    caplog.set_level(logging.INFO, logger="sdf_pipeline")
     exit_code = drivers.regression(
         sdf_path=sdf_path,
-        log_path=tmp_path / "regression.sqlite",
         reference_path=reference_path,
         consumer_function=regression_consumer,
         get_molfile_id=_get_mcule_id,
         number_of_consumer_processes=2,
     )
-
     assert exit_code == 1
-    with sqlite3.connect(tmp_path / "regression.sqlite") as db:
-        failed_id, failed_result = db.execute(
-            "SELECT molfile_id, result FROM results WHERE result != 'passed'",
-        ).fetchone()
-        assert failed_id == "9261759198"
-        assert failed_result == "current: '920' != reference: '42'"
+    assert len(caplog.records) == 1
+    assert caplog.records[0].message.split("\n")[2:] == [
+        "<molfile_id>: 9261759198>",
+        "<sdf>: mcule_20000.sdf.gz",
+        "<info>: regression",
+        "<assertion>: current: '920' != reference: '42'",
+    ]
