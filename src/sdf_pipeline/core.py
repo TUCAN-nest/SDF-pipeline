@@ -1,8 +1,11 @@
 import multiprocessing
 import gzip
-from typing import Callable
+from typing import Callable, TYPE_CHECKING
 from collections.abc import Generator
-from sdf_pipeline.utils import ConsumerResult
+
+if TYPE_CHECKING:
+    # https://adamj.eu/tech/2021/05/13/python-type-hints-how-to-fix-circular-imports/
+    from sdf_pipeline.drivers import ConsumerResult
 
 
 def _read_molfiles_from_zipped_sdf(sdf_path: str) -> Generator[str, None, None]:
@@ -50,7 +53,7 @@ def run(
     sdf_path: str,
     consumer_function: Callable,
     number_of_consumer_processes: int,
-) -> Generator[ConsumerResult, None, None]:
+) -> Generator["ConsumerResult", None, None]:
     molfile_queue: multiprocessing.Queue = multiprocessing.Queue()  # TODO: limit size?
     result_queue: multiprocessing.Queue = multiprocessing.Queue()
 

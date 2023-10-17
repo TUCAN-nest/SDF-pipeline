@@ -7,7 +7,7 @@
 Below you find a minimal example of how to write a consumer function.
 
 ```Python
-from sdf_pipeline import utils
+from sdf_pipeline import drivers
 
 molfile = (
         "https://en.wikipedia.org/wiki/This_Is_Water\n\n\n  0  0  0     0  0            999 V3000\n"
@@ -29,10 +29,9 @@ molfile = (
 def get_molfile_id(molfile: str) -> str:
     return molfile.splitlines()[0].strip()
 
-def molfile_length_consumer(molfile: str, get_molfile_id: Callable) -> utils.ConsumerResult:
-    return utils.ConsumerResult(
+def molfile_length_consumer(molfile: str, get_molfile_id: Callable) -> drivers.ConsumerResult:
+    return drivers.ConsumerResult(
         get_molfile_id(molfile),
-        utils.get_current_time(),
         "molfile length",
         str(len(molfile)),
     )

@@ -1,18 +1,19 @@
 import re
 import sqlite3
 import pytest
+import logging
 from operator import add
 from functools import reduce
 from pathlib import Path
-from sdf_pipeline import drivers, utils
 from typing import Callable
-import logging
+from sdf_pipeline import drivers
 
 
-def regression_consumer(molfile: str, get_molfile_id: Callable) -> utils.ConsumerResult:
-    return utils.ConsumerResult(
+def regression_consumer(
+    molfile: str, get_molfile_id: Callable
+) -> drivers.ConsumerResult:
+    return drivers.ConsumerResult(
         get_molfile_id(molfile),
-        utils.get_current_time(),
         "regression",
         str(len(molfile)),
     )

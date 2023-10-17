@@ -1,9 +1,19 @@
 import sqlite3
 from typing import Callable
 from functools import partial
-from sdf_pipeline import core, utils, logger
 from pathlib import Path
 from dataclasses import astuple
+from datetime import datetime
+from dataclasses import dataclass, asdict
+from sdf_pipeline import core, logger
+
+
+@dataclass
+class ConsumerResult:
+    molfile_id: str
+    info: str
+    result: str
+    time: str = datetime.now().isoformat(timespec="seconds")
 
 
 def invariance(
@@ -45,7 +55,7 @@ def regression(
             consumer_function=partial(consumer_function, get_molfile_id=get_molfile_id),
             number_of_consumer_processes=number_of_consumer_processes,
         ):
-            molfile_id, time, info, current_result = astuple(consumer_result)
+            molfile_id, info, current_result, time = astuple(consumer_result)
             assert (
                 molfile_id not in processed_molfile_ids
             ), f"Molfile ID {molfile_id} has been processed multiple times."
@@ -95,14 +105,19 @@ def regression_reference(
     number_of_consumer_processes: int = 8,
 ) -> int:
     with sqlite3.connect(reference_path) as reference_db:
-        utils.create_results_table(reference_db)
+        reference_db.execute(
+            "CREATE TABLE IF NOT EXISTS results (molfile_id UNIQUE, time, info, result)"
+        )
 
         for consumer_result in core.run(
             sdf_path=sdf_path,
             consumer_function=partial(consumer_function, get_molfile_id=get_molfile_id),
             number_of_consumer_processes=number_of_consumer_processes,
         ):
-            utils.log_result(reference_db, consumer_result)
+            reference_db.execute(
+                "INSERT INTO results VALUES (:molfile_id, :time, :info, :result)",
+                asdict(consumer_result),
+            )
 
         reference_db.execute(
             "CREATE INDEX IF NOT EXISTS molfile_id_index ON results (molfile_id)"
