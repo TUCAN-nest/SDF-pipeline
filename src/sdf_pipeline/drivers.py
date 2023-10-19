@@ -19,29 +19,6 @@ class ConsumerResult:
     )
 
 
-def invariance(
-    sdf_path: str,
-    consumer_function: Callable,
-    get_molfile_id: Callable,
-    number_of_consumer_processes: int = 8,
-) -> int:
-    exit_code = 0
-
-    for consumer_result in core.run(
-        sdf_path=sdf_path,
-        consumer_function=partial(consumer_function, get_molfile_id=get_molfile_id),
-        number_of_consumer_processes=number_of_consumer_processes,
-    ):
-        molfile_id, time, info, assertion = astuple(consumer_result)
-        if assertion != "passed":
-            exit_code = 1
-            logger.info(
-                f"{time}: invariance test failed for molfile {molfile_id} from {Path(sdf_path).name} (computed with {info}): {assertion}."
-            )
-
-    return exit_code
-
-
 def regression(
     sdf_path: str,
     reference_path: str,
