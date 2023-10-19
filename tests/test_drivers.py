@@ -2,6 +2,7 @@ import re
 import sqlite3
 import pytest
 import logging
+import json
 from operator import add
 from functools import reduce
 from pathlib import Path
@@ -68,9 +69,11 @@ def test_regression_driver(sdf_path, reference_path, caplog):
     )
     assert exit_code == 1
     assert len(caplog.records) == 1
-    assert caplog.records[0].message.split("\n")[2:] == [
-        "<molfile_id>: 9261759198>",
-        "<sdf>: mcule_20000.sdf.gz",
-        "<info>: regression",
-        "<assertion>: current: '920' != reference: '42'",
-    ]
+    log_entry = json.loads(caplog.records[0].message.lstrip("regression test failed:"))
+    log_entry.pop("time")
+    assert log_entry == {
+        "molfile_id": "9261759198",
+        "sdf": "mcule_20000.sdf.gz",
+        "info": "regression",
+        "assertion": "current: '920' != reference: '42'",
+    }

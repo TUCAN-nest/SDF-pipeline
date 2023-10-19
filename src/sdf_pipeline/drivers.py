@@ -1,4 +1,5 @@
 import sqlite3
+import json
 from typing import Callable
 from functools import partial
 from pathlib import Path
@@ -76,9 +77,16 @@ def regression(
                 assertion = (
                     f"current: '{current_result}' != reference: '{reference_result}'"
                 )
-                logger.info(
-                    f"regression test failed:\n<time>: {time}\n<molfile_id>: {molfile_id}>\n<sdf>: {Path(sdf_path).name}\n<info>: {info}\n<assertion>: {assertion}"
+                log_entry = json.dumps(
+                    {
+                        "time": time,
+                        "molfile_id": molfile_id,
+                        "sdf": Path(sdf_path).name,
+                        "info": info,
+                        "assertion": assertion,
+                    }
                 )
+                logger.info(f"regression test failed:{log_entry}")
 
         unprocessed_molfile_ids = (
             set(
