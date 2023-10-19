@@ -5,7 +5,7 @@ from functools import partial
 from pathlib import Path
 from dataclasses import astuple
 from datetime import datetime
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from sdf_pipeline import core, logger
 
 
@@ -14,7 +14,9 @@ class ConsumerResult:
     molfile_id: str
     info: str
     result: str
-    time: str = datetime.now().isoformat(timespec="seconds")
+    time: str = field(
+        default_factory=lambda: datetime.now().isoformat(timespec="seconds")
+    )
 
 
 def invariance(
