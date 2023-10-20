@@ -50,11 +50,10 @@ def regression(
             ), f"Couldn't find molfile ID {molfile_id} in reference."
             reference_result = reference_query[0]
 
-            assertion = "passed"
             if current_result != reference_result:
                 exit_code = 1
-                assertion = (
-                    f"current: '{current_result}' != reference: '{reference_result}'"
+                diff = json.dumps(
+                    {"current": current_result, "reference": reference_result}
                 )
                 log_entry = json.dumps(
                     {
@@ -62,7 +61,7 @@ def regression(
                         "molfile_id": molfile_id,
                         "sdf": Path(sdf_path).name,
                         "info": info,
-                        "assertion": assertion,
+                        "diff": diff,
                     }
                 )
                 logger.info(f"regression test failed:{log_entry}")

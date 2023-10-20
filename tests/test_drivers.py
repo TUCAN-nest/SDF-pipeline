@@ -75,5 +75,5 @@ def test_regression_driver(sdf_path, reference_path, caplog):
         "molfile_id": "9261759198",
         "sdf": "mcule_20000.sdf.gz",
         "info": "regression",
-        "assertion": "current: '920' != reference: '42'",
+        "diff": '{"current": "920", "reference": "42"}',
     }
