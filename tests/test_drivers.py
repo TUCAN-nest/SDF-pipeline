@@ -55,7 +55,7 @@ def test_regression_reference_driver(sdf_path, tmp_path):
             "SELECT result FROM results ",
         ).fetchall()
         assert len(results) == 20000
-        assert reduce(add, [int(result[0]) for result in results]) == 30943876
+        assert reduce(add, [int(result[0]) for result in results]) == 31063876
 
 
 def test_regression_driver(sdf_path, reference_path, caplog):
@@ -75,5 +75,5 @@ def test_regression_driver(sdf_path, reference_path, caplog):
         "molfile_id": "9261759198",
         "sdf": "mcule_20000.sdf.gz",
         "info": "regression",
-        "diff": '{"current": "920", "reference": "42"}',
+        "diff": '{"current": "926", "reference": "42"}',
     }

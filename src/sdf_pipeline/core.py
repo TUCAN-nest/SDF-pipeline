@@ -8,30 +8,26 @@ if TYPE_CHECKING:
     from sdf_pipeline.drivers import ConsumerResult
 
 
-def _read_molfiles_from_zipped_sdf(sdf_path: str) -> Generator[str, None, None]:
-    """Generator yielding molfiles from gzipped SDF file.
-    (G)unzips the SDF on a line-by-line basis to avoid loading entire SDF into memory.
-
-    https://en.wikipedia.org/wiki/Chemical_table_file#SDF
-    """
-    current_molfile = ""
+def read_records_from_gzipped_sdf(sdf_path: str) -> Generator[str, None, None]:
+    # https://en.wikipedia.org/wiki/Chemical_table_file#SDF"
+    current_record = ""
     # TODO: guard file opening.
     with gzip.open(sdf_path, "rb") as gzipped_sdf:
-        for gunzipped_line in gzipped_sdf:
-            line = gunzipped_line.decode("utf-8", "backslashreplace")
-            # TODO: harden SDF parsing according to
-            # http://www.dalkescientific.com/writings/diary/archive/2020/09/18/handling_the_sdf_record_delimiter.html
-            if line.strip() == "$$$$":
-                yield current_molfile
-                current_molfile = ""
-            else:
-                current_molfile += line
+        # decompress SDF line-by-line to avoid loading entire SDF into memory
+        for decompressed_line in gzipped_sdf:
+            decoded_line = decompressed_line.decode("utf-8", "backslashreplace")
+            current_record += decoded_line
+            if decoded_line.strip() == "$$$$":
+                # TODO: harden SDF parsing according to
+                # http://www.dalkescientific.com/writings/diary/archive/2020/09/18/handling_the_sdf_record_delimiter.html
+                yield current_record
+                current_record = ""
 
 
 def _produce_molfiles(
     molfile_queue: multiprocessing.Queue, sdf_path: str, n_poison_pills: int
 ) -> None:
-    for molfile in _read_molfiles_from_zipped_sdf(sdf_path):
+    for molfile in read_records_from_gzipped_sdf(sdf_path):
         molfile_queue.put(molfile)
 
     for _ in range(n_poison_pills):
