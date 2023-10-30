@@ -21,7 +21,7 @@ def _read_molfiles_from_zipped_sdf(sdf_path: str) -> Generator[str, None, None]:
             line = gunzipped_line.decode("utf-8", "backslashreplace")
             # TODO: harden SDF parsing according to
             # http://www.dalkescientific.com/writings/diary/archive/2020/09/18/handling_the_sdf_record_delimiter.html
-            if "$$$$" in line:
+            if line.strip() == "$$$$":
                 yield current_molfile
                 current_molfile = ""
             else:
