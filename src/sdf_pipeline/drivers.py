@@ -1,3 +1,14 @@
+"""
+From https://docs.python.org/3/library/sqlite3.html#how-to-use-the-connection-context-manager:
+'If the body of the with statement finishes without exceptions, the transaction is committed.
+If this commit fails, or if the body of the with statement raises an uncaught exception, the transaction is rolled back.'
+
+Contrary to the conventional behavior of context managers, the connection is not closed upon leaving the `with` block:
+'The context manager neither implicitly opens a new transaction nor closes the connection.'
+See also https://blog.rtwilson.com/a-python-sqlite3-context-manager-gotcha/.
+
+"""
+
 import sqlite3
 import json
 from typing import Callable
@@ -80,6 +91,8 @@ def regression(
             not unprocessed_molfile_ids
         ), f"Reference contains molfile IDs that haven't been processed: {unprocessed_molfile_ids}."
 
+    reference_db.close()
+
     return exit_code
 
 
@@ -108,5 +121,7 @@ def regression_reference(
         reference_db.execute(
             "CREATE INDEX IF NOT EXISTS molfile_id_index ON results (molfile_id)"
         )  # crucial, reduces look-up speed by orders of magnitude
+
+    reference_db.close()
 
     return 0
