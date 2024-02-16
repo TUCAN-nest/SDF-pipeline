@@ -1,8 +1,8 @@
 // https://containers.dev/implementors/json_reference/
-// https://hub.docker.com/_/microsoft-vscode-devcontainers
+// https://github.com/devcontainers/images/tree/main/src/python
 {
     "name": "SDF-pipeline",
-    "image": "mcr.microsoft.com/vscode/devcontainers/python:3.11",
+    "image": "mcr.microsoft.com/devcontainers/python:3.12",
     "customizations": {
         "vscode": {
             "extensions": [
