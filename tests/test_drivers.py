@@ -14,11 +14,14 @@ from concurrent.futures.process import BrokenProcessPool
 from sdf_pipeline import drivers, core
 
 
-def consumer(molfile: str, get_molfile_id: Callable) -> drivers.ConsumerResult:
+def regression_consumer(
+    molfile: str, get_molfile_id: Callable
+) -> drivers.ConsumerResult:
+
     return drivers.ConsumerResult(
-        get_molfile_id(molfile),
-        "regression",
-        str(len(molfile)),
+        molfile_id=get_molfile_id(molfile),
+        info={"consumer": "regression"},
+        result={"molfile_length": len(molfile)},
     )
 
 
@@ -26,10 +29,11 @@ def busy_consumer(molfile: str, get_molfile_id: Callable) -> drivers.ConsumerRes
     n = 0
     for i in range(100):
         n += sum([len(line) ** i for line in molfile.split("\n")])
+
     return drivers.ConsumerResult(
-        get_molfile_id(molfile),
-        "regression",
-        n,
+        molfile_id=get_molfile_id(molfile),
+        info={"consumer": "busy_consumer"},
+        result={"large_result": n},
     )
 
 
@@ -68,7 +72,7 @@ def test_regression_reference_driver(sdf_path, tmp_path):
     exit_code = drivers.regression_reference(
         sdf_path=sdf_path,
         reference_path=tmp_path / "regression_reference.sqlite",
-        consumer_function=consumer,
+        consumer_function=regression_consumer,
         get_molfile_id=_get_mcule_id,
         number_of_consumer_processes=2,
     )
@@ -78,7 +82,13 @@ def test_regression_reference_driver(sdf_path, tmp_path):
             "SELECT result FROM results ",
         ).fetchall()
         assert len(results) == 20000
-        assert reduce(add, [int(result[0]) for result in results]) == 31063876
+        assert (
+            reduce(
+                add,
+                [int(json.loads(result[0])["molfile_length"]) for result in results],
+            )
+            == 31063876
+        )
 
 
 def test_regression_driver(sdf_path, reference_path, caplog):
@@ -86,19 +96,19 @@ def test_regression_driver(sdf_path, reference_path, caplog):
     exit_code = drivers.regression(
         sdf_path=sdf_path,
         reference_path=reference_path,
-        consumer_function=consumer,
+        consumer_function=regression_consumer,
         get_molfile_id=_get_mcule_id,
         number_of_consumer_processes=2,
     )
     assert exit_code == 1
     assert len(caplog.records) == 1
     log_entry = json.loads(caplog.records[0].message.lstrip("regression test failed:"))
-    log_entry.pop("time")
-    assert log_entry == {
-        "molfile_id": "9261759198",
-        "sdf": "mcule_20000.sdf.gz",
-        "info": "regression",
-        "diff": '{"current": "926", "reference": "42"}',
+    assert log_entry["molfile_id"] == "9261759198"
+    assert log_entry["sdf"] == "mcule_20000.sdf.gz"
+    assert log_entry["info"] == {"consumer": "regression", "parameters": ""}
+    assert log_entry["diff"] == {
+        "current": '{"molfile_length": 926}',
+        "reference": '{"molfile_length": 42}',
     }
 
 

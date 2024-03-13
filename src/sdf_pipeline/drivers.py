@@ -11,23 +11,26 @@ See also https://blog.rtwilson.com/a-python-sqlite3-context-manager-gotcha/.
 
 import sqlite3
 import json
-from typing import Callable
+from typing import Callable, Any
 from functools import partial
 from pathlib import Path
-from dataclasses import astuple
 from datetime import datetime
-from dataclasses import dataclass, asdict, field
+from pydantic import BaseModel, Field
 from sdf_pipeline import core, logger
 
 
-@dataclass
-class ConsumerResult:
+class ConsumerInfo(BaseModel):
+    consumer: str
+    parameters: str = Field(default="")
+
+
+class ConsumerResult(BaseModel):
     molfile_id: str
-    info: str
-    result: str
-    time: str = field(
+    info: ConsumerInfo
+    time: str = Field(
         default_factory=lambda: datetime.now().isoformat(timespec="seconds")
     )
+    result: dict[str, Any]
 
 
 def regression(
@@ -46,7 +49,7 @@ def regression(
             consumer_function=partial(consumer_function, get_molfile_id=get_molfile_id),
             number_of_consumer_processes=number_of_consumer_processes,
         ):
-            molfile_id, info, current_result, time = astuple(consumer_result)
+            molfile_id = consumer_result.molfile_id
             assert (
                 molfile_id not in processed_molfile_ids
             ), f"Molfile ID {molfile_id} has been processed multiple times."
@@ -61,18 +64,19 @@ def regression(
             ), f"Couldn't find molfile ID {molfile_id} in reference."
             reference_result = reference_query[0]
 
+            current_result = json.dumps(consumer_result.result)
             if current_result != reference_result:
                 exit_code = 1
-                diff = json.dumps(
-                    {"current": current_result, "reference": reference_result}
-                )
                 log_entry = json.dumps(
                     {
-                        "time": time,
+                        "time": consumer_result.time,
                         "molfile_id": molfile_id,
                         "sdf": Path(sdf_path).name,
-                        "info": info,
-                        "diff": diff,
+                        "info": dict(consumer_result.info),
+                        "diff": {
+                            "current": current_result,
+                            "reference": reference_result,
+                        },
                     }
                 )
                 logger.info(f"regression test failed:{log_entry}")
@@ -115,7 +119,12 @@ def regression_reference(
         ):
             reference_db.execute(
                 "INSERT INTO results VALUES (:molfile_id, :time, :info, :result)",
-                asdict(consumer_result),
+                {
+                    "molfile_id": consumer_result.molfile_id,
+                    "time": consumer_result.time,
+                    "info": consumer_result.info.model_dump_json(),
+                    "result": json.dumps(consumer_result.result),
+                },
             )
 
         reference_db.execute(

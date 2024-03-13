@@ -1,6 +1,7 @@
 [project]
 name = "sdf_pipeline"
-version = "1.0.0"
+version = "1.1.0"
+dependencies = ["pydantic >= 2.6.4"]
 
 [project.optional-dependencies]
 dev = ["pytest"]

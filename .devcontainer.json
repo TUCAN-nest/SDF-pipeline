@@ -15,7 +15,9 @@
                 "streetsidesoftware.code-spell-checker",
                 "tamasfe.even-better-toml",
                 "eamodio.gitlens",
-                "GitHub.copilot"
+                "GitHub.copilot",
+                "DavidAnson.vscode-markdownlint",
+                "yy0931.vscode-sqlite3-editor"
             ],
             "settings": {
                 "editor.formatOnSave": true,

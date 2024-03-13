@@ -2,45 +2,67 @@
 
 ![pipeline architecture](architecture.svg)
 
-
 ## Consumer API
+
+A consumer is a Python function that takes the following arguments:
+
+* `molfile`: `str` containing molblock
+* `get_molfile_id`: `Callable` (aka function) that parses an (arbitrary) identifier from `molfile`
+
+The consumer function has to return a `ConsumerResult`,
+which is a [Pydantic](https://docs.pydantic.dev/latest/) model whose schema you can inspect with
+
+```Python
+import json
+from sdf_pipeline.drivers import ConsumerResult
+
+print(json.dumps(ConsumerResult.model_json_schema(), indent=2))
+```
+
 Below you find a minimal example of how to write a consumer function.
 
 ```Python
-from sdf_pipeline import drivers
+import textwrap
+from typing import Callable
+from sdf_pipeline.drivers import ConsumerResult
 
-molfile = (
-        "https://en.wikipedia.org/wiki/This_Is_Water\n\n\n  0  0  0     0  0            999 V3000\n"
-        "M  V30 BEGIN CTAB\n"
-        "M  V30 COUNTS 3 2 0 0 0\n"
-        "M  V30 BEGIN ATOM\n"
-        "M  V30 1 H 0 0 0 0\n"
-        "M  V30 2 O 0 0 0 0\n"
-        "M  V30 3 H 0 0 0 0\n"
-        "M  V30 END ATOM\n"
-        "M  V30 BEGIN BOND\n"
-        "M  V30 1 1 1 2\n"
-        "M  V30 2 1 3 2\n"
-        "M  V30 END BOND\n"
-        "M  V30 END CTAB\n"
-        "M  END"
-    )
+
+molfile: str = textwrap.dedent(
+    """
+    https://en.wikipedia.org/wiki/This_Is_Water
+      -OEChem-03132411562D
+
+      3  2  0     0  0  0  0  0  0999 V2000
+        2.5369   -0.1550    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+        3.0739    0.1550    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+        2.0000    0.1550    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+      1  2  1  0  0  0  0
+      1  3  1  0  0  0  0
+    M  END
+    """
+)
+
 
 def get_molfile_id(molfile: str) -> str:
     return molfile.splitlines()[0].strip()
 
-def molfile_length_consumer(molfile: str, get_molfile_id: Callable) -> drivers.ConsumerResult:
-    return drivers.ConsumerResult(
-        get_molfile_id(molfile),
-        "molfile length",
-        str(len(molfile)),
+
+def example_consumer(molfile: str, get_molfile_id: Callable) -> ConsumerResult:
+    return ConsumerResult(
+        molfile_id=get_molfile_id(molfile),
+        info={"consumer": "example"},
+        result={"molfile_length": len(molfile)},
     )
+
+
+print(example_consumer(molfile, get_molfile_id))
 ```
+
+## Drivers
 
 The [tests](tests/test_drivers.py) show how to pass a consumer function to the pipeline via the drivers.
 Run the tests with
 
 ```Shell
-pytest tests/test_drivers.py -s
+pytest
 ```
-
