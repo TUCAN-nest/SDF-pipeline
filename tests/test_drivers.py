@@ -21,7 +21,11 @@ def regression_consumer(
     return drivers.ConsumerResult(
         molfile_id=get_molfile_id(molfile),
         info={"consumer": "regression"},
-        result={"molfile_length": len(molfile)},
+        result={
+            "molfile_length": (
+                42 if get_molfile_id(molfile) == "9261759198" else len(molfile)
+            )
+        },
     )
 
 
@@ -87,7 +91,7 @@ def test_regression_reference_driver(sdf_path, tmp_path):
                 add,
                 [int(json.loads(result[0])["molfile_length"]) for result in results],
             )
-            == 31063876
+            == 31062992
         )
 
 
@@ -107,8 +111,8 @@ def test_regression_driver(sdf_path, reference_path, caplog):
     assert log_entry["sdf"] == "mcule_20000.sdf.gz"
     assert log_entry["info"] == {"consumer": "regression", "parameters": ""}
     assert log_entry["diff"] == {
-        "current": '{"molfile_length": 926}',
-        "reference": '{"molfile_length": 42}',
+        "current": '{"molfile_length": 42}',
+        "reference": '{"molfile_length": 926}',
     }
 
 
