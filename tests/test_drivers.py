@@ -29,6 +29,19 @@ def regression_consumer(
     )
 
 
+def invariance_consumer(
+    molfile: str, get_molfile_id: Callable
+) -> drivers.ConsumerResult:
+
+    return drivers.ConsumerResult(
+        molfile_id=get_molfile_id(molfile),
+        info={"consumer": "invariance"},
+        result={
+            "variants": ["A", "B"] if get_molfile_id(molfile) == "9261759198" else ["A"]
+        },
+    )
+
+
 def busy_consumer(molfile: str, get_molfile_id: Callable) -> drivers.ConsumerResult:
     n = 0
     for i in range(100):
@@ -114,6 +127,23 @@ def test_regression_driver(sdf_path, reference_path, caplog):
         "current": '{"molfile_length": 42}',
         "reference": '{"molfile_length": 926}',
     }
+
+
+def test_invariance_driver(sdf_path, caplog):
+    caplog.set_level(logging.INFO, logger="sdf_pipeline")
+    exit_code = drivers.invariance(
+        sdf_path=sdf_path,
+        consumer_function=invariance_consumer,
+        get_molfile_id=_get_mcule_id,
+        number_of_consumer_processes=2,
+    )
+    assert exit_code == 1
+    assert len(caplog.records) == 1
+    log_entry = json.loads(caplog.records[0].message.lstrip("invariance test failed:"))
+    assert log_entry["molfile_id"] == "9261759198"
+    assert log_entry["sdf"] == "mcule_20000.sdf.gz"
+    assert log_entry["info"] == {"consumer": "invariance", "parameters": ""}
+    assert log_entry["variants"] == ["A", "B"]
 
 
 def test_core_raises_on_exception(sdf_path, caplog):

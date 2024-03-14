@@ -134,3 +134,39 @@ def regression_reference(
     reference_db.close()
 
     return 0
+
+
+def invariance(
+    sdf_path: str,
+    consumer_function: Callable,
+    get_molfile_id: Callable,
+    number_of_consumer_processes: int = 8,
+) -> int:
+    exit_code = 0
+
+    for consumer_result in core.run(
+        sdf_path=sdf_path,
+        consumer_function=partial(consumer_function, get_molfile_id=get_molfile_id),
+        number_of_consumer_processes=number_of_consumer_processes,
+    ):
+        n_variants = len(consumer_result.result["variants"])
+        if n_variants == 1:
+            continue
+        exit_code = 1
+        if n_variants == 0:
+            logger.info(
+                f"invariance test didn't run: molfile ID {consumer_result.molfile_id} from {Path(sdf_path).name} could not be read."
+            )
+        else:
+            log_entry = json.dumps(
+                {
+                    "time": consumer_result.time,
+                    "molfile_id": consumer_result.molfile_id,
+                    "sdf": Path(sdf_path).name,
+                    "info": dict(consumer_result.info),
+                    "variants": consumer_result.result["variants"],
+                }
+            )
+            logger.info(f"invariance test failed:{log_entry}")
+
+    return exit_code
